@@ -34,7 +34,7 @@ const dummyJobs = [
     hours: '08:00-17:00',
     isOpen: true,
     type: 'external',
-    image: 'https://scontent-bkk1-2.xx.fbcdn.net/v/t39.30808-6/495023885_989953816650819_7355723694124183379_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=13d280&_nc_ohc=IrB6jdtTFxIQ7kNvwH0coSf&_nc_oc=AdqSUnPtuXR6foOhk4ATI7nqUwY3kpDcyNV2Nmd-fzxzmaOMh8ehje8tt-Z6jHQCRXg&_nc_zt=23&_nc_ht=scontent-bkk1-2.xx&_nc_gid=HCGv704mA89KxvbdcWLIHw&_nc_ss=7a32e&oh=00_Afwht2X2Txk0CC5qy871RO_Yt2OcXXsfL8E2INIK66meRg&oe=69CA75B8',
+    image: Placeholder,
     capacity: 50,
     applicants: 30,
     postedBy: 'Student Development and Alumni Relations, PSU Phuket',

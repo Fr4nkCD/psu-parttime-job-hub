@@ -7,11 +7,11 @@ module.exports = {
     extend: {
       colors: {
         'psu-blue': {
-          light: '#4A90D9',
+          light: '#0a5bc4',
           DEFAULT: '#1a3a6b',
           dark: '#0f2347',
         },
-        'psu-accent': '#2563eb',
+        'psu-accent': '#004aad',
       },
     },
   },

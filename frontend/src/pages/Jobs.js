@@ -1,80 +1,160 @@
-import { useState } from 'react';
-import bgImage from '../assets/home-bg-1.jpg';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import PageTransition from '../components/PageTransition';
 import JobCard from '../components/JobCard';
-
-import dummyJobs from '../components/dummyJobs';
+import bgImage from '../assets/home-bg-1.jpg';
+import Placeholder from '../assets/placeholder-image.jpg'
 
 function Jobs() {
+    const [jobs, setJobs] = useState([]);
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
+    const [loading, setLoading] = useState(true);
 
-    const filteredJobs = dummyJobs.filter((job) => {
+    useEffect(() => {
+        const fetchJobs = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/jobs/');
+                const data = await response.json();
+
+                // Inside Jobs.js useEffect
+                const formattedJobs = data.map(job => ({
+                    ...job,
+                    // 1. Map Backend fields to your JobCard prop names
+                    pay: job.compensation_amount,
+                    location: job.location_type,
+                    image: job.poster_image_url || Placeholder,
+
+                    // 2. Normalize logic (Convert "OPEN" to true, "EXTERNAL" to "external")
+                    isOpen: job.status === 'OPEN',
+                    type: job.job_type.toLowerCase(), // This makes "EXTERNAL" -> "external"
+
+                    // 3. Handle the Date (Backend uses term/year, Dummy used a string)
+                    date: job.date_info || `${job.academic_term}/${job.academic_year}`,
+
+                    // 4. Handle the Applicants/Capacity
+                    applicants: job.applicants_count || 0,
+                    postedBy: job.organization_name
+                }));
+
+                setJobs(formattedJobs);
+                console.log("Current Jobs State:", formattedJobs)
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching jobs: ", error);
+                setLoading(false);
+            }
+        };
+
+        fetchJobs();
+    }, []);
+
+    const filteredJobs = jobs.filter((job) => {
         const matchesType = filter === 'all' || job.type === filter;
         const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase());
         return matchesType && matchesSearch;
     });
 
-    return (
-        <div className="relative min-h-screen pt-24 pb-16 px-8 overflow-hidden">
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
 
-            {/* Blurred Background */}
-            <div
-                className="absolute inset-0 z-0 blur-lg scale-105"
+    const itemVariants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: { opacity: 1, x: 0 }
+    };
+
+    return (
+        <div className="relative min-h-screen w-full overflow-hidden">
+            {/* 1. Static Background Layers */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-0 blur-lg scale-105"
                 style={{
                     backgroundImage: `url(${bgImage})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                 }}
             />
+            <div className="fixed inset-0 bg-black/30 z-10" />
 
-            {/* Dark Overlay */}
-            <div className="absolute inset-0 bg-black/30" />
+            <PageTransition>
+                <div className="relative z-20 pt-24 pb-16 px-4 md:px-8 max-w-6xl mx-auto">
 
-            {/* Single Container for everything */}
-            <div className="relative z-10 max-w-6xl mx-auto bg-white/60 backdrop-blur-sm rounded-xl shadow-sm p-6">
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="bg-white/60 backdrop-blur-md rounded-2xl shadow-sm p-6 md:p-8"
+                    >
+                        <motion.h2 variants={itemVariants} className="text-xl font-bold text-gray-800 mb-4 tracking-tight">
+                            Search Jobs
+                        </motion.h2>
 
-                {/* Search Title */}
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Jobs</h2>
+                        <motion.input
+                            variants={itemVariants}
+                            type="text"
+                            placeholder="Search job title..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-psu-accent mb-6 bg-white/50"
+                        />
 
-                {/* Search Bar */}
-                <input
-                    type="text"
-                    placeholder="Search job title..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-psu-accent mb-4"
-                />
+                        <motion.div variants={itemVariants} className="flex flex-wrap gap-2 mb-8">
+                            {['all', 'internal', 'external'].map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setFilter(type)}
+                                    className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${filter === type
+                                            ? 'bg-psu-blue text-white shadow-lg scale-105'
+                                            : 'bg-white/80 text-gray-600 hover:bg-white/60'
+                                        }`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </motion.div>
 
-                {/* Filter Tabs */}
-                <div className="flex gap-2 mb-6">
-                    {['all', 'internal', 'external'].map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setFilter(type)}
-                            className={`px-5 py-2 rounded-full text-sm font-medium transition ${filter === type
-                                    ? 'bg-psu-accent text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                        >
-                            {type === 'all' ? 'All' : type === 'internal' ? 'Internal' : 'External'}
-                        </button>
-                    ))}
+                        {/* RESTORED: AnimatePresence with popLayout mode */}
+                        <AnimatePresence mode="popLayout">
+                            <motion.div
+                                layout // This makes the grid items slide smoothly into new spots
+                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                            >
+                                {filteredJobs.length > 0 ? (
+                                    filteredJobs.map((job) => (
+                                        <motion.div
+                                            layout
+                                            key={job.id}
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+                                        >
+                                            <JobCard job={job} />
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <motion.div
+                                        layout
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="col-span-full text-center text-gray-400 py-20 bg-white/20 rounded-xl"
+                                    >
+                                        No results found for your search.
+                                    </motion.div>
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
+                    </motion.div>
                 </div>
-
-                {/* Job Grid */}
-                {filteredJobs.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {filteredJobs.map((job) => (
-                            <JobCard key={job.id} job={job} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center text-gray-400 py-20">
-                        No jobs found.
-                    </div>
-                )}
-
-            </div>
+            </PageTransition>
         </div>
     );
 }

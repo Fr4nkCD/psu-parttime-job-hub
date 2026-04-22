@@ -18,6 +18,7 @@ function Navbar() {
                 <div className="hidden md:flex ml-auto mr-8 items-center gap-8">
                     <Link to="/" className="text-gray-700 hover:text-psu-blue font-medium">Home</Link>
                     <Link to="/jobs" className="text-gray-700 hover:text-psu-blue font-medium">Jobs</Link>
+                    <Link to="/admin/dashboard" className="text-gray-700 hover:text-psu-blue font-medium">Dashboard</Link>
                     <div className="flex items-center gap-1 text-gray-700 hover:text-psu-blue font-medium cursor-pointer">
                         About Us <span className="text-xs">▼</span>
                     </div>
@@ -67,6 +68,7 @@ function Navbar() {
                 <div className="md:hidden mt-3 pb-3 border-t border-gray-100 flex flex-col gap-4 pt-4 animate-fadeIn">
                     <Link to="/" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium px-2">Home</Link>
                     <Link to="/jobs" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium px-2">Jobs</Link>
+                    <Link to="/admin/dashboard" onClick={() => setIsOpen(false)} className="text-gray-700 font-medium px-2">Dashboard</Link>
                     <div className="text-gray-700 font-medium px-2">About Us</div>
                     <div className="text-gray-700 font-medium px-2">Other</div>
                 </div>

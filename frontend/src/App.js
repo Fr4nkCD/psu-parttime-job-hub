@@ -7,6 +7,12 @@ import JobDetail from './pages/JobDetail';
 import Profile from './pages/Profile';
 import Footer from './components/Footer';
 
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminJobs from './pages/admin/AdminJobs';
+import AdminJobForm from './pages/admin/AdminJobForm';
+import AdminApplicants from './pages/admin/AdminApplicants';
+import AdminEvaluate from './pages/admin/AdminEvaluate';
+
 // This component handles the animation logic
 function AnimatedRoutes() {
   const location = useLocation();
@@ -19,6 +25,13 @@ function AnimatedRoutes() {
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/profile" element={<Profile />} />
+
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/jobs" element={<AdminJobs />} />
+        <Route path="/admin/jobs/new" element={<AdminJobForm />} />
+        <Route path="/admin/jobs/:id/edit" element={<AdminJobForm />} />
+        <Route path="/admin/jobs/:id/applicants" element={<AdminApplicants />} />
+        <Route path="/admin/applications/:applicationId/evaluate" element={<AdminEvaluate />} />
       </Routes>
     </AnimatePresence>
   );

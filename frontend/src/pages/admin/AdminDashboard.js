@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import AdminLayout from '../../components/AdminLayout';
-import bgImage from '../../assets/home-bg-3.jpg';
 import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -12,38 +10,16 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 
 const PIE_COLORS = ['#2563eb', '#93c5fd'];
 
-// Animation Variants
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.1 }
-    }
-};
-
-const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-        y: 0,
-        opacity: 1,
-        transition: { type: 'spring', stiffness: 300, damping: 24 }
-    }
-};
-
 function StatCard({ icon, label, value, sub }) {
     return (
-        <motion.div 
-            variants={itemVariants}
-            whileHover={{ scale: 1.02 }}
-            className="bg-white/70 backdrop-blur-sm rounded-xl p-5 flex items-center gap-4 border border-white/20 shadow-sm"
-        >
+        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 flex items-center gap-4 border border-white/20 shadow-sm">
             <div className="text-3xl">{icon}</div>
             <div>
                 <p className="text-2xl font-bold text-gray-800">{value}</p>
                 <p className="text-sm text-gray-500">{label}</p>
                 {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
             </div>
-        </motion.div>
+        </div>
     );
 }
 
@@ -115,141 +91,121 @@ function AdminDashboard() {
 
     return (
         <div className="relative min-h-screen overflow-hidden">
-            <div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-0 blur-lg scale-105"
-                style={{
-                    backgroundImage: `url(${bgImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                }}
-            />
-            <div className="fixed inset-0 bg-black/30 z-10" />
-
             <div className="relative z-20">
-                <AdminLayout>
-                    <motion.div 
-                        initial="hidden"
-                        animate="visible"
-                        variants={containerVariants}
-                        className="max-w-5xl mx-auto"
-                    >
-                        {/* Header */}
-                        <motion.div variants={itemVariants} className="flex items-center justify-between mb-6">
-                            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-                            <div className="flex gap-3">
-                                <select
-                                    value={termFilter}
-                                    onChange={(e) => setTermFilter(e.target.value)}
-                                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-psu-accent"
-                                >
-                                    <option value="all">All Terms</option>
-                                    {uniqueTerms.map((t) => (
-                                        <option key={t} value={t}>Term {t}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={yearFilter}
-                                    onChange={(e) => setYearFilter(e.target.value)}
-                                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-psu-accent"
-                                >
-                                    <option value="all">All Years</option>
-                                    {uniqueYears.map((y) => (
-                                        <option key={y} value={y}>{y}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={() => window.print()}
-                                    className="bg-psu-accent hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-md"
-                                >
-                                    Export PDF
-                                </button>
+                <div className="max-w-5xl mx-auto">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+                        <div className="flex gap-3">
+                            <select
+                                value={termFilter}
+                                onChange={(e) => setTermFilter(e.target.value)}
+                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-psu-accent"
+                            >
+                                <option value="all">All Terms</option>
+                                {uniqueTerms.map((t) => (
+                                    <option key={t} value={t}>Term {t}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={yearFilter}
+                                onChange={(e) => setYearFilter(e.target.value)}
+                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-psu-accent"
+                            >
+                                <option value="all">All Years</option>
+                                {uniqueYears.map((y) => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                            <button
+                                onClick={() => window.print()}
+                                className="bg-psu-accent hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-md"
+                            >
+                                Export PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    {loading ? (
+                        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-white text-center py-20 font-medium">
+                            Loading dashboard data...
+                        </motion.p>
+                    ) : (
+                        <div className="flex flex-col gap-6">
+                            {/* Stat Cards */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <StatCard icon="📋" label="Total Jobs" value={totalJobs} sub={`${openJobs} currently open`} />
+                                <StatCard icon="👤" label="Total Applicants" value={totalApplicants} sub={`${approvedApplicants} approved`} />
+                                <StatCard icon="💵" label="Total Pay (Internal)" value={`฿${totalPay.toLocaleString()}`} sub="Sum of compensation" />
+                                <StatCard icon="✅" label="Approval Rate" value={totalApplicants > 0 ? `${Math.round((approvedApplicants / totalApplicants) * 100)}%` : 'N/A'} sub="Approved / Total" />
                             </div>
-                        </motion.div>
 
-                        {loading ? (
-                            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-white text-center py-20 font-medium">
-                                Loading dashboard data...
-                            </motion.p>
-                        ) : (
-                            <div className="flex flex-col gap-6">
-                                {/* Stat Cards */}
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <StatCard icon="📋" label="Total Jobs" value={totalJobs} sub={`${openJobs} currently open`} />
-                                    <StatCard icon="👤" label="Total Applicants" value={totalApplicants} sub={`${approvedApplicants} approved`} />
-                                    <StatCard icon="💵" label="Total Pay (Internal)" value={`฿${totalPay.toLocaleString()}`} sub="Sum of compensation" />
-                                    <StatCard icon="✅" label="Approval Rate" value={totalApplicants > 0 ? `${Math.round((approvedApplicants / totalApplicants) * 100)}%` : 'N/A'} sub="Approved / Total" />
+                            {/* Charts Row 1 */}
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20">
+                                    <h2 className="text-sm font-semibold text-gray-700 mb-4">Monthly Applications</h2>
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <LineChart data={monthlyData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                                            <YAxis tick={{ fontSize: 11 }} />
+                                            <Tooltip />
+                                            <Line type="monotone" dataKey="applications" stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
                                 </div>
 
-                                {/* Charts Row 1 */}
-                                <div className="grid grid-cols-2 gap-6">
-                                    <motion.div variants={itemVariants} className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20">
-                                        <h2 className="text-sm font-semibold text-gray-700 mb-4">Monthly Applications</h2>
-                                        <ResponsiveContainer width="100%" height={200}>
-                                            <LineChart data={monthlyData}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                                                <YAxis tick={{ fontSize: 11 }} />
-                                                <Tooltip />
-                                                <Line type="monotone" dataKey="applications" stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} />
-                                            </LineChart>
-                                        </ResponsiveContainer>
-                                    </motion.div>
-
-                                    <motion.div variants={itemVariants} className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20">
-                                        <h2 className="text-sm font-semibold text-gray-700 mb-4">Jobs by Type</h2>
-                                        <ResponsiveContainer width="100%" height={200}>
-                                            <PieChart>
-                                                <Pie data={pieData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                                                    {pieData.map((_, index) => ( <Cell key={index} fill={PIE_COLORS[index]} /> ))}
-                                                </Pie>
-                                                <Tooltip />
-                                                <Legend />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </motion.div>
+                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20">
+                                    <h2 className="text-sm font-semibold text-gray-700 mb-4">Jobs by Type</h2>
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <PieChart>
+                                            <Pie data={pieData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                                                {pieData.map((_, index) => (<Cell key={index} fill={PIE_COLORS[index]} />))}
+                                            </Pie>
+                                            <Tooltip />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
+                            </div>
 
-                                {/* Jobs Table */}
-                                <motion.div variants={itemVariants} className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20">
-                                    <h2 className="text-sm font-semibold text-gray-700 mb-4">Recent Jobs</h2>
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-gray-200 text-gray-500 text-left">
-                                                <th className="pb-3 font-medium">Title</th>
-                                                <th className="pb-3 font-medium">Type</th>
-                                                <th className="pb-3 font-medium">Status</th>
-                                                <th className="pb-3 font-medium">Pay</th>
-                                                <th className="pb-3 font-medium">Term</th>
+                            {/* Jobs Table */}
+                            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20">
+                                <h2 className="text-sm font-semibold text-gray-700 mb-4">Recent Jobs</h2>
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 text-gray-500 text-left">
+                                            <th className="pb-3 font-medium">Title</th>
+                                            <th className="pb-3 font-medium">Type</th>
+                                            <th className="pb-3 font-medium">Status</th>
+                                            <th className="pb-3 font-medium">Pay</th>
+                                            <th className="pb-3 font-medium">Term</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredJobs.slice(0, 5).map((job) => (
+                                            <tr key={job.id} className="border-b border-gray-100 last:border-0">
+                                                <td className="py-3 font-medium text-gray-800 max-w-xs truncate">{job.title}</td>
+                                                <td className="py-3">
+                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${job.job_type === 'INTERNAL' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                        {job.job_type}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3">
+                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${job.status === 'OPEN' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                        {job.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 text-gray-600">฿{parseFloat(job.compensation_amount).toLocaleString()}</td>
+                                                <td className="py-3 text-gray-500">{job.academic_term}/{job.academic_year}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredJobs.slice(0, 5).map((job) => (
-                                                <tr key={job.id} className="border-b border-gray-100 last:border-0">
-                                                    <td className="py-3 font-medium text-gray-800 max-w-xs truncate">{job.title}</td>
-                                                    <td className="py-3">
-                                                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${job.job_type === 'INTERNAL' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                            {job.job_type}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-3">
-                                                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${job.status === 'OPEN' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                            {job.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-3 text-gray-600">฿{parseFloat(job.compensation_amount).toLocaleString()}</td>
-                                                    <td className="py-3 text-gray-500">{job.academic_term}/{job.academic_year}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </motion.div>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                        )}
-                    </motion.div>
-                </AdminLayout>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

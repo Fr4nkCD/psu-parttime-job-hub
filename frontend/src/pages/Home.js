@@ -28,7 +28,7 @@ function Home() {
         <div className="relative z-20 min-h-screen flex items-center justify-center text-center text-white px-4">
           <div className="max-w-4xl">
             <h1 className="text-5xl font-bold mb-4 drop-shadow-2xl">
-              Find Jobs in the Phuket Campus
+              Find Part-time Jobs in the Phuket Campus
             </h1>
             <p className="text-xl mb-10 text-white/90 drop-shadow-md">
               A hub for part-time jobs and social activities for all PSU Phuket students

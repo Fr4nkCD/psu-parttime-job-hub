@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
 import useSmoothScroll from './hooks/useSmoothScroll';
 
 import Navbar from './components/Navbar';
@@ -24,6 +25,15 @@ import Register from './pages/Register';
 // This component handles the animation logic
 function AnimatedRoutes() {
   const location = useLocation();
+
+  useEffect(() => {
+    if (window.lenis?.scrollTo) {
+      window.lenis.scrollTo(0, { immediate: true });
+      requestAnimationFrame(() => {
+        window.lenis?.resize();
+      });
+    }
+  }, [location.pathname]);
 
   const routeKey = location.pathname.startsWith('/admin')
     ? 'admin-root'

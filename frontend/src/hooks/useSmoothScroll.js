@@ -4,25 +4,26 @@ import Lenis from 'lenis';
 export default function useSmoothScroll() {
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 0.1,
-      easing: (t) => 1 - Math.pow(1 - t, 4), // Buttery smooth easing
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
+      lerp: 0.1, 
       wheelMultiplier: 1,
-      smoothTouch: false,
-      touchMultiplier: 2,
+      gestureOrientation: 'vertical',
+      normalizeWheel: true, // Helps with Windows mouse-notches
+      smoothWheel: true,
     });
 
+    window.lenis = lenis;
+
+    let rafId;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
-
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
       lenis.destroy();
+      cancelAnimationFrame(rafId);
+      window.lenis = null;
     };
   }, []);
 }

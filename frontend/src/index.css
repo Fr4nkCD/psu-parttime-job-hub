@@ -1,3 +1,4 @@
+/* index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,7 +6,6 @@
 @layer base {
   body {
     @apply bg-psu-blue;
-    /* Set your desired default color here */
   }
 
   html.lenis,
@@ -28,4 +28,5 @@
   .lenis.lenis-scrolling iframe {
     pointer-events: none;
   }
+
 }

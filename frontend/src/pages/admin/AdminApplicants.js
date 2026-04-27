@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 
 function AdminApplicants() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { getToken } = useAuth();
+
     const [applications, setApplications] = useState([]);
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -17,14 +20,24 @@ function AdminApplicants() {
 
     const fetchData = async () => {
         try {
+            const headers = {
+                'Authorization': `Bearer ${getToken()}`,
+                'Content-Type': 'application/json'
+            };
+
             const [jobRes, appRes] = await Promise.all([
-                fetch(`http://127.0.0.1:8000/api/jobs/${id}/`),
-                fetch(`http://127.0.0.1:8000/api/applications/?job=${id}`),
+                fetch(`http://127.0.0.1:8000/api/jobs/${id}/`, { headers }),
+                fetch(`http://127.0.0.1:8000/api/applications/?job=${id}`, { headers }),
             ]);
+
             const jobData = await jobRes.json();
             const appData = await appRes.json();
+
             setJob(jobData);
-            setApplications(appData);
+
+            const cleanApps = Array.isArray(appData) ? appData : (appData.results || []);
+            setApplications(cleanApps);
+
             setLoading(false);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -34,16 +47,27 @@ function AdminApplicants() {
 
     const handleStatusChange = async (applicationId, newStatus) => {
         try {
-            await fetch(`http://127.0.0.1:8000/api/applications/${applicationId}/`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+            const response = await fetch(`http://127.0.0.1:8000/api/applications/${applicationId}/`, {
+                method: 'PATCH', // Partial update
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify({ status: newStatus }),
             });
-            setApplications(applications.map((app) =>
-                app.id === applicationId ? { ...app, status: newStatus } : app
-            ));
+
+            if (response.ok) {
+                // ONLY update UI if the database actually saved it
+                setApplications(applications.map((app) =>
+                    app.id === applicationId ? { ...app, status: newStatus } : app
+                ));
+            } else {
+                const errorData = await response.json();
+                console.error('Server rejected the update:', errorData);
+                alert("Failed to save status. Check console for details.");
+            }
         } catch (error) {
-            console.error('Error updating status:', error);
+            console.error('Network error updating status:', error);
         }
     };
 

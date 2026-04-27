@@ -38,7 +38,7 @@ function AdminLayout() {
                 animate={{ opacity: 1 }}
                 className="fixed inset-0 z-0 overflow-hidden" // Added z-0
             >
-                <div 
+                <div
                     className="absolute inset-0 blur-lg scale-105"
                     style={{
                         backgroundImage: `url(${bgImage})`,
@@ -52,7 +52,7 @@ function AdminLayout() {
 
             {/* 3. Main Layout Wrapper */}
             <div className="relative z-20 flex min-h-screen pt-16">
-                
+
                 {/* Sidebar */}
                 <motion.div
                     initial={{ x: hasAnimated ? 0 : "-100%" }}
@@ -75,10 +75,9 @@ function AdminLayout() {
                             <NavLink
                                 to={link.to}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                                        isActive
-                                            ? 'bg-psu-blue text-white shadow-md'
-                                            : 'text-gray-600 hover:bg-white/50 hover:pl-5'
+                                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${isActive
+                                        ? 'bg-psu-blue text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-white/50 hover:pl-5'
                                     }`
                                 }
                             >
@@ -90,17 +89,15 @@ function AdminLayout() {
 
                 {/* Page Content: The only part that "swaps" */}
                 <div className="ml-56 flex-1 p-8 relative">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={location.pathname} // Triggers entry/exit for the sub-page
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }} // SMOOTH EXIT
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                        >
-                            <Outlet />
-                        </motion.div>
-                    </AnimatePresence>
+                    <motion.div
+                        key={location.pathname} // Triggers entry/exit for the sub-page
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }} // SMOOTH EXIT
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                        <Outlet />
+                    </motion.div>
                 </div>
             </div>
         </div>

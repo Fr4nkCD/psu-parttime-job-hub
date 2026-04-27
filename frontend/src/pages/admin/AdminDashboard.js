@@ -36,14 +36,23 @@ function AdminDashboard() {
 
     const fetchData = async () => {
         try {
+            const token = localStorage.getItem('access_token');
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+
             const [jobsRes, appsRes] = await Promise.all([
-                fetch('http://127.0.0.1:8000/api/jobs/'),
-                fetch('http://127.0.0.1:8000/api/applications/'),
+                fetch('http://127.0.0.1:8000/api/jobs/', { headers }),
+                fetch('http://127.0.0.1:8000/api/applications/', { headers }),
             ]);
+
             const jobsData = await jobsRes.json();
             const appsData = await appsRes.json();
-            setJobs(jobsData);
-            setApplications(appsData);
+
+            setJobs(Array.isArray(jobsData) ? jobsData : jobsData.results || []);
+            setApplications(Array.isArray(appsData) ? appsData : appsData.results || []);
+
             setLoading(false);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);

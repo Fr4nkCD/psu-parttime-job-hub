@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion'; // Added motion
+import { motion, AnimatePresence } from 'framer-motion';
+// FIX: Go up two levels to find the context folder
+import { useAuth } from '../../context/AuthContext';
 
-// Animation Variants
 const itemVariants = {
     hidden: { y: 10, opacity: 0 },
     visible: { y: 0, opacity: 1 }
@@ -10,7 +11,6 @@ const itemVariants = {
 
 function StarRating({ value, onChange }) {
     const [hovered, setHovered] = useState(0);
-
     return (
         <div className="flex gap-1 bg-white/40 p-2 rounded-xl border border-white/60">
             {[1, 2, 3, 4, 5].map((star) => (
@@ -38,6 +38,8 @@ function StarRating({ value, onChange }) {
 function AdminEvaluate() {
     const { applicationId } = useParams();
     const navigate = useNavigate();
+    const { getToken } = useAuth(); // Added this to get the token
+
     const [application, setApplication] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -59,12 +61,36 @@ function AdminEvaluate() {
 
     const fetchApplication = async () => {
         try {
-            const res = await fetch(`http://127.0.0.1:8000/api/applications/${applicationId}/`);
-            const data = await res.json();
-            setApplication(data);
+            const headers = { 'Authorization': `Bearer ${getToken()}` };
+
+            // 1. Fetch Application Detail
+            const appRes = await fetch(`http://127.0.0.1:8000/api/applications/${applicationId}/`, { headers });
+            const appData = await appRes.json();
+            setApplication(appData);
+
+            // 2. CHECK FOR EXISTING EVALUATION
+            // Assuming your API allows filtering evaluations by application ID
+            const evalRes = await fetch(`http://127.0.0.1:8000/api/evaluations/?application=${applicationId}`, { headers });
+            const evalData = await evalRes.json();
+
+            const existingEval = Array.isArray(evalData) ? evalData[0] : (evalData.results?.[0]);
+
+            if (existingEval) {
+                // Populate the form with existing data so the admin can "Edit"
+                setForm({
+                    punctuality_rating: existingEval.punctuality_rating,
+                    responsibility_rating: existingEval.responsibility_rating,
+                    grooming_rating: existingEval.grooming_rating,
+                    quality_rating: existingEval.quality_rating,
+                    comment: existingEval.comment,
+                    result_status: existingEval.result_status,
+                    id: existingEval.id
+                });
+            }
+
             setLoading(false);
         } catch (error) {
-            console.error('Error fetching application:', error);
+            console.error('Error fetching details:', error);
             setLoading(false);
         }
     };
@@ -82,18 +108,18 @@ function AdminEvaluate() {
     };
 
     const handleSubmit = async () => {
-        if (Object.values(form).some(v => v === 0)) {
-            setError('Please complete all ratings before submitting.');
-            return;
-        }
-
-        setSaving(true);
-        setError(null);
+        const isEditing = !!form.id;
+        const url = isEditing
+            ? `http://127.0.0.1:8000/api/evaluations/${form.id}/`
+            : 'http://127.0.0.1:8000/api/evaluations/';
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/evaluations/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const response = await fetch(url, {
+                method: isEditing ? 'PATCH' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify({ ...form, application: applicationId }),
             });
 
@@ -152,6 +178,7 @@ function AdminEvaluate() {
                                             👤
                                         </div>
                                         <div>
+                                            {/* Using the new student_name and student_id from your serializer */}
                                             <h2 className="text-xl font-bold text-gray-800">{application?.student_name}</h2>
                                             <p className="text-gray-500 text-sm font-medium">{application?.student_id} • {application?.faculty}</p>
                                             <div className="mt-1 inline-block bg-psu-blue/10 text-psu-blue text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
@@ -164,7 +191,6 @@ function AdminEvaluate() {
                                 <div className="p-8 space-y-8">
                                     {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100">{error}</div>}
 
-                                    {/* Ratings Grid */}
                                     <div className="grid gap-6">
                                         {ratingsConfig.map((item) => (
                                             <motion.div variants={itemVariants} initial="hidden" animate="visible" key={item.key} className="flex items-center justify-between gap-4">
@@ -177,7 +203,6 @@ function AdminEvaluate() {
                                         ))}
                                     </div>
 
-                                    {/* Score Highlight */}
                                     <div className="bg-psu-blue/5 border border-psu-blue/10 rounded-2xl p-6 flex items-center justify-between">
                                         <span className="text-sm font-black text-psu-blue uppercase tracking-widest">Performance Score</span>
                                         <div className="text-right">
@@ -186,7 +211,6 @@ function AdminEvaluate() {
                                         </div>
                                     </div>
 
-                                    {/* Result Toggle */}
                                     <div>
                                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Final Verdict</label>
                                         <div className="flex gap-3">
@@ -203,7 +227,6 @@ function AdminEvaluate() {
                                         </div>
                                     </div>
 
-                                    {/* Comment Box */}
                                     <div className="space-y-2">
                                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Supervisor Comments</label>
                                         <textarea value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} rows={3}
@@ -211,7 +234,6 @@ function AdminEvaluate() {
                                             className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-psu-accent bg-white/50 resize-none transition-all" />
                                     </div>
 
-                                    {/* Action Footer */}
                                     <div className="pt-4 flex gap-4">
                                         <button onClick={handleSubmit} disabled={saving}
                                             className="flex-[2] bg-psu-accent hover:bg-blue-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50">

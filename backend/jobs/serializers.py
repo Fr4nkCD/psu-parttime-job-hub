@@ -4,10 +4,10 @@ from .models import Job, Student, WorkSchedule, Application, Evaluation
 class WorkScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkSchedule
-        fields = '__all__'
+        fields = ['id', 'date', 'start_time', 'end_time']
 
 class JobSerializer(serializers.ModelSerializer):
-    schedules = WorkScheduleSerializer(many=True, read_only=True)
+    schedules = WorkScheduleSerializer(many=True, required=False)
     applicants_count = serializers.SerializerMethodField()
 
     def get_applicants_count(self, obj):
@@ -16,6 +16,32 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = '__all__'
+
+    def create(self, validated_data):
+        schedules_data = validated_data.pop('schedules', [])
+        job = Job.objects.create(**validated_data)
+        for item in schedules_data:
+            WorkSchedule.objects.create(job=job, **item)
+        return job
+
+    def update(self, instance, validated_data):
+        schedules_data = validated_data.pop('schedules', None)
+        
+        instance = super().update(instance, validated_data)
+
+        if schedules_data is not None:
+            if hasattr(instance, 'schedules'):
+                instance.schedules.all().delete()
+            else:
+                instance.workschedule_set.all().delete()
+
+            for item in schedules_data:
+                # IMPORTANT: Remove the 'id' if it exists in the item 
+                # to prevent primary key conflicts in some databases
+                item.pop('id', None)
+                WorkSchedule.objects.create(job=instance, **item)
+        
+        return instance
 
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,6 +69,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = '__all__'
+        read_only_fields = ['student', 'applied_at']
 
 class EvaluationSerializer(serializers.ModelSerializer):
     class Meta:

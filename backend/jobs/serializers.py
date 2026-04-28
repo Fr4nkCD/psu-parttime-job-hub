@@ -44,8 +44,25 @@ class JobSerializer(serializers.ModelSerializer):
         return instance
 
 class StudentSerializer(serializers.ModelSerializer):
+    email = serializers.ReadOnlyField(source='user.email')
+
     class Meta:
         model = Student
+        fields = [
+            'id', 'first_name', 'last_name', 'student_id', 
+            'email',
+            'faculty', 'major', 'religion', 'allergies', 
+            'student_card_image', 'user'
+        ]
+
+class EvaluationSerializer(serializers.ModelSerializer):
+    job_title = serializers.SerializerMethodField()
+    
+    def get_job_title(self, obj):
+        return obj.application.job.title
+
+    class Meta:
+        model = Evaluation
         fields = '__all__'
 
 class ApplicationSerializer(serializers.ModelSerializer):
@@ -53,6 +70,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     student_id = serializers.SerializerMethodField()
     faculty = serializers.SerializerMethodField()
     job_title = serializers.SerializerMethodField()
+    evaluation = EvaluationSerializer(read_only=True)
 
     def get_student_name(self, obj):
         return f"{obj.student.first_name} {obj.student.last_name}"
@@ -69,9 +87,4 @@ class ApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = '__all__'
-        read_only_fields = ['student', 'applied_at']
-
-class EvaluationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Evaluation
-        fields = '__all__'
+        read_only_fields = ['student', 'application_date']

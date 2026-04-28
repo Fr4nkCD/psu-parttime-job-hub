@@ -86,13 +86,20 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
 
 class EvaluationViewSet(viewsets.ModelViewSet):
-    queryset = Evaluation.objects.all()
     serializer_class = EvaluationSerializer
-    permission_classes = [IsAdminUser]
+    queryset = Evaluation.objects.all()
 
-    def perform_create(self, serializer):
-        # Automatically record WHICH admin/staff did the evaluation
-        serializer.save(evaluator=self.request.user)
+    def get_queryset(self):
+        """
+        Optionally restricts the returned evaluations to a given application,
+        by filtering against an `application` query parameter in the URL.
+        """
+        queryset = Evaluation.objects.all()
+        application_id = self.request.query_params.get('application')
+        if application_id is not None:
+            # This ensures ?application=1 only returns evaluation for App 1
+            queryset = queryset.filter(application_id=application_id)
+        return queryset
 
 
 class AuthViewSet(viewsets.ViewSet):

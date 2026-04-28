@@ -11,6 +11,12 @@ import Profile from './pages/Profile';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 
+import AboutUs from './pages/AboutUs';
+import Personnel from './pages/Personnel';
+import StudentOrganization from './pages/StudentOrganization';
+import HallOfFame from './pages/HallOfFame';
+import Articles from './pages/Articles';
+
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminJobs from './pages/admin/AdminJobs';
@@ -46,6 +52,12 @@ function AnimatedRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
+
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/about/personnel" element={<Personnel />} />
+        <Route path="/about/student-organization" element={<StudentOrganization />} />
+        <Route path="/other/articles" element={<Articles />} />
+        <Route path="/other/hall-of-fame" element={<HallOfFame />} />
 
         {/* Authorized Routes */}
         <Route path="/register" element={

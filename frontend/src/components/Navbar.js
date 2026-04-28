@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/psu-logo.svg';
 import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
+    const [aboutOpen, setAboutOpen] = useState(false);
+    const [otherOpen, setOtherOpen] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const { isLoggedIn, isAdmin, user, logout } = useAuth();
+    const { isLoggedIn, isAdmin, isStudent, student, user, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -14,6 +16,15 @@ function Navbar() {
         navigate('/');
         setDropdownOpen(false);
     };
+
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setAboutOpen(false);
+            setOtherOpen(false);
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm px-4 md:px-8 py-3">
@@ -32,11 +43,64 @@ function Navbar() {
                     {isLoggedIn() && isAdmin() && (
                         <Link to="/admin/dashboard" className="text-gray-700 hover:text-psu-blue font-medium">Dashboard</Link>
                     )}
-                    <div className="flex items-center gap-1 text-gray-700 hover:text-psu-blue font-medium cursor-pointer">
-                        About Us <span className="text-xs">▼</span>
+                    <div className="relative">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setAboutOpen(!aboutOpen); setOtherOpen(false); }}
+                            className="flex items-center gap-1 text-gray-700 hover:text-psu-blue font-medium"
+                        >
+                            About Us <span className="text-xs">▼</span>
+                        </button>
+                        {aboutOpen && (
+                            <div className="absolute top-8 left-0 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                                <Link
+                                    to="/about"
+                                    onClick={() => setAboutOpen(false)}
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    📋 About This Project
+                                </Link>
+                                <Link
+                                    to="/about/personnel"
+                                    onClick={() => setAboutOpen(false)}
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    👥 Personnel
+                                </Link>
+                                <Link
+                                    to="/about/student-organization"
+                                    onClick={() => setAboutOpen(false)}
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    🏫 Student Organization
+                                </Link>
+                            </div>
+                        )}
                     </div>
-                    <div className="flex items-center gap-1 text-gray-700 hover:text-psu-blue font-medium cursor-pointer">
-                        Other <span className="text-xs">▼</span>
+                    <div className="relative">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setOtherOpen(!otherOpen); setAboutOpen(false); }}
+                            className="flex items-center gap-1 text-gray-700 hover:text-psu-blue font-medium"
+                        >
+                            Other <span className="text-xs">▼</span>
+                        </button>
+                        {otherOpen && (
+                            <div className="absolute top-8 left-0 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                                <Link
+                                    to="/other/articles"
+                                    onClick={() => setOtherOpen(false)}
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    📰 Articles
+                                </Link>
+                                <Link
+                                    to="/other/hall-of-fame"
+                                    onClick={() => setOtherOpen(false)}
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    🏆 Hall of Fame
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -50,28 +114,43 @@ function Navbar() {
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                                 className="w-9 h-9 rounded-full bg-psu-blue text-white flex items-center justify-center font-semibold text-sm hover:bg-psu-blue-dark transition"
                             >
-                                {user?.username?.charAt(0).toUpperCase()}
+                                {student?.first_name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase()}
                             </button>
                             {dropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                                    <button
-                                        onClick={() => { navigate('/profile'); setDropdownOpen(false); }}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                                    >
-                                        👤 My Profile
-                                    </button>
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                                    {isStudent() && (
+                                        <div className="px-4 py-3 border-b border-gray-50 mb-1 select-none">
+                                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Student Account</p>
+                                            <p className="text-sm font-semibold text-gray-800">
+                                                {/* Use firstName based on your design doc */}
+                                                {student ? `${student.first_name} ${student.last_name}` : "-"}
+                                            </p>
+                                            <p className="text-sm text-gray-600">{student?.student_id}</p>
+                                        </div>) || (
+                                            <div className="px-4 py-3 border-b border-gray-50 mb-1 select-none">
+                                                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Staff Account</p>
+                                                <p className="text-sm text-gray-600">{user?.username}</p>
+                                            </div>
+                                        )}
                                     {isAdmin() && (
                                         <button
                                             onClick={() => { navigate('/admin/dashboard'); setDropdownOpen(false); }}
-                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                                         >
                                             🏠 Dashboard
                                         </button>
-                                    )}
+                                    ) || (
+                                            <button
+                                                onClick={() => { navigate('/profile'); setDropdownOpen(false); }}
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                                            >
+                                                👤 My Profile
+                                            </button>
+                                        )}
                                     <hr className="my-1 border-gray-100" />
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50"
+                                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-100"
                                     >
                                         Sign Out
                                     </button>
@@ -88,9 +167,9 @@ function Navbar() {
                     )}
 
                     {/* Language Button */}
-                    <button className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-sm font-medium text-gray-600 hover:bg-gray-100">
+                    {/* <button className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-sm font-medium text-gray-600 hover:bg-gray-100">
                         EN
-                    </button>
+                    </button> */}
 
                     {/* Hamburger Button */}
                     <button

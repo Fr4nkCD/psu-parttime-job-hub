@@ -5,12 +5,10 @@ import bgImage from '../assets/home-bg-1.jpg';
 import logo from '../assets/psu-logo.svg';
 
 const FACULTIES = [
-    'College of Computing',
-    'Faculty of Technology and Environment',
-    'Faculty of International Studies',
     'Faculty of Hospitality and Tourism',
-    'Faculty of Medicine',
-    'Faculty of Nursing',
+    'Faculty of International Studies',
+    'Faculty of Technology and Environment',
+    'College of Computing',
 ];
 
 function Register() {

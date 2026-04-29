@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext'; // Added for security
+import { useAuth } from '../../context/AuthContext';
 
 const emptyForm = {
     title: '',
@@ -16,13 +16,13 @@ const emptyForm = {
     academic_year: '',
     poster_image_url: '',
     line_group_url: '',
-    schedules: [] // Initialized for nested shifts
+    schedules: []
 };
 
 function AdminJobForm() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { getToken } = useAuth();
+    const { getToken, refreshAccessToken } = useAuth();
     const isEditing = Boolean(id);
     const [form, setForm] = useState(emptyForm);
     const [loading, setLoading] = useState(false);
@@ -32,16 +32,28 @@ function AdminJobForm() {
     useEffect(() => {
         if (isEditing) {
             setLoading(true);
+
+            // Fetch job details for editing (Public access allowed for retrieval)
             fetch(`http://127.0.0.1:8000/api/jobs/${id}/`, {
-                headers: { 'Authorization': `Bearer ${getToken()}` }
+                headers: { 'Content-Type': 'application/json' }
             })
-                .then((res) => res.json())
+                .then((res) => {
+                    if (!res.ok) throw new Error(`Failed to load job: ${res.status}`);
+                    return res.json();
+                })
                 .then((data) => {
-                    setForm({ ...data, schedules: data.schedules || [] });
+                    setForm({
+                        ...data,
+                        compensation_amount: data.compensation_amount ?? '',
+                        required_amount: data.required_amount ?? '',
+                        academic_term: data.academic_term ?? '',
+                        academic_year: data.academic_year ?? '',
+                        schedules: data.schedules || []
+                    });
                     setLoading(false);
                 })
-                .catch(() => {
-                    setError('Failed to load job.');
+                .catch((err) => {
+                    setError(err.message);
                     setLoading(false);
                 });
         }
@@ -53,7 +65,6 @@ function AdminJobForm() {
         setForm({ ...form, [name]: formattedValue });
     };
 
-    // --- Dynamic Schedule Logic ---
     const addSchedule = () => {
         setForm({
             ...form,
@@ -75,39 +86,49 @@ function AdminJobForm() {
     const handleSubmit = async () => {
         setSaving(true);
         setError(null);
-        try {
-            const url = isEditing
-                ? `http://127.0.0.1:8000/api/jobs/${id}/`
-                : 'http://127.0.0.1:8000/api/jobs/';
-            const method = isEditing ? 'PUT' : 'POST';
+        let token = getToken();
 
-            const response = await fetch(url, {
-                method,
+        const apiUrl = isEditing
+            ? `http://127.0.0.1:8000/api/jobs/${id}/`
+            : 'http://127.0.0.1:8000/api/jobs/';
+
+        const sendRequest = async (authToken) => {
+            return await fetch(apiUrl, {
+                method: isEditing ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getToken()}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify(form),
             });
+        };
+
+        try {
+            let response = await sendRequest(token);
+
+            // Handle token expiration: attempt refresh and retry once
+            if (response.status === 401) {
+                const newToken = await refreshAccessToken();
+                if (newToken) {
+                    response = await sendRequest(newToken);
+                } else {
+                    throw new Error("Session expired. Please log in again.");
+                }
+            }
 
             const data = await response.json();
-
             if (!response.ok) {
-                const errorData = await response.json();
-
-                const messages = Object.entries(errorData).map(([field, errors]) => {
+                // Parse structured backend errors for the UI
+                const messages = Object.entries(data).map(([field, errors]) => {
                     if (field === 'schedules' && Array.isArray(errors)) {
                         return errors.map((err, i) => {
-                            const shiftErrors = Object.entries(err)
-                                .map(([f, m]) => `${f}: ${m}`)
-                                .join(', ');
+                            const shiftErrors = Object.entries(err).map(([f, m]) => `${f}: ${m}`).join(', ');
                             return shiftErrors ? `Shift ${i + 1} (${shiftErrors})` : null;
                         }).filter(Boolean).join(' | ');
                     }
                     return `${field}: ${Array.isArray(errors) ? errors.join(' ') : errors}`;
                 });
-
-                throw new Error(messages.join(' | ') || 'Failed to save.');
+                throw new Error(messages.join(' | ') || "Save failed.");
             }
 
             navigate('/admin/jobs');
@@ -122,6 +143,8 @@ function AdminJobForm() {
         { name: 'title', label: 'Job Title', type: 'text', full: true },
         { name: 'organization_name', label: 'Organization', type: 'text', full: true },
         { name: 'location_type', label: 'Location', type: 'text', full: true },
+        { name: 'poster_image_url', label: 'Poster Image URL', type: 'text', full: true },
+        { name: 'line_group_url', label: 'LINE Group URL', type: 'text', full: true },
         { name: 'compensation_amount', label: 'Pay (฿)', type: 'number' },
         { name: 'required_amount', label: 'Staff Need', type: 'number' },
         { name: 'academic_term', label: 'Term', type: 'number' },
@@ -149,17 +172,18 @@ function AdminJobForm() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, ease: [0.1, 1, 0.1, 1] }} // Snappy Ease
+                        transition={{ duration: 0.5, ease: [0.1, 1, 0.1, 1] }}
                         className="bg-white/70 backdrop-blur-md rounded-3xl shadow-2xl p-8 border border-white/40"
                     >
                         {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100 mb-6 uppercase tracking-widest">{error}</div>}
 
                         <div className="grid grid-cols-2 gap-6">
-                            {/* Base Fields */}
+                            {/* Base Fields Mapping */}
                             {fields.map((f) => (
                                 <div key={f.name} className={f.full ? 'col-span-2' : 'col-span-1'}>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">{f.label}</label>
                                     <input type={f.type} name={f.name} value={form[f.name]} onChange={handleChange}
+                                        placeholder={f.name.includes('url') ? "https://..." : ""}
                                         className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-psu-accent/50 bg-white/50 transition-all" />
                                 </div>
                             ))}
@@ -178,10 +202,11 @@ function AdminJobForm() {
                                     <option value="OPEN">Open</option>
                                     <option value="CLOSED">Closed</option>
                                     <option value="IN_PROGRESS">In Progress</option>
+                                    <option value="COMPLETED">Completed</option>
                                 </select>
                             </div>
 
-                            {/* --- WORK SCHEDULES SECTION (FROM PDF) --- */}
+                            {/* Work Schedules Section */}
                             <div className="col-span-2 pt-6 border-t border-gray-100">
                                 <div className="flex justify-between items-center mb-4">
                                     <label className="text-[10px] font-black text-psu-blue uppercase tracking-widest ml-1">Work Schedules</label>
@@ -223,6 +248,7 @@ function AdminJobForm() {
                                 </div>
                             </div>
 
+                            {/* Job Description */}
                             <div className="col-span-2 space-y-1">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
                                 <textarea name="description" value={form.description} onChange={handleChange} rows={4}
@@ -230,7 +256,7 @@ function AdminJobForm() {
                             </div>
                         </div>
 
-                        {/* Actions */}
+                        {/* Submit and Cancel Actions */}
                         <div className="flex gap-4 mt-10">
                             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving}
                                 className="flex-[2] bg-psu-accent hover:bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 disabled:opacity-50">

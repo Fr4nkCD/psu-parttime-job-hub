@@ -48,7 +48,7 @@ function Navbar() {
                             onClick={(e) => { e.stopPropagation(); setAboutOpen(!aboutOpen); setOtherOpen(false); }}
                             className="flex items-center gap-1 text-gray-700 hover:text-psu-blue font-medium"
                         >
-                            About Us <span className="text-xs">▼</span>
+                            About Us <span className="text-xs">{aboutOpen ? "▲" : "▼"}</span>
                         </button>
                         {aboutOpen && (
                             <div className="absolute top-8 left-0 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
@@ -81,7 +81,7 @@ function Navbar() {
                             onClick={(e) => { e.stopPropagation(); setOtherOpen(!otherOpen); setAboutOpen(false); }}
                             className="flex items-center gap-1 text-gray-700 hover:text-psu-blue font-medium"
                         >
-                            Other <span className="text-xs">▼</span>
+                            Other <span className="text-xs">{otherOpen ? "▲" : "▼"}</span>
                         </button>
                         {otherOpen && (
                             <div className="absolute top-8 left-0 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">

@@ -139,13 +139,19 @@ function AdminJobs() {
                                                 </td>
                                                 <td className="px-8 py-5">
                                                     <div className="flex justify-center gap-2">
-                                                        {/* RE-INSERTED VIEW BUTTON */}
+                                                        <button
+                                                            onClick={() => navigate(`/jobs/${job.id}`)}
+                                                            className="p-2 bg-black/10 hover:bg-white/10 rounded-lg text-white transition-all"
+                                                            title="View"
+                                                        >
+                                                            👁️
+                                                        </button>
                                                         <button
                                                             onClick={() => navigate(`/admin/jobs/${job.id}/applicants`)}
                                                             className="p-2 bg-black/10 hover:bg-white/10 rounded-lg text-white transition-all"
                                                             title="View Applicants"
                                                         >
-                                                            👁️
+                                                            👤
                                                         </button>
                                                         <button
                                                             onClick={() => navigate(`/admin/jobs/${job.id}/edit`)}

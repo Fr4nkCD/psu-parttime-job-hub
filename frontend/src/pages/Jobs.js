@@ -17,28 +17,36 @@ function Jobs() {
                 const response = await fetch('http://127.0.0.1:8000/api/jobs/');
                 const data = await response.json();
 
-                // Inside Jobs.js useEffect
-                const formattedJobs = data.map(job => ({
-                    ...job,
-                    // 1. Map Backend fields to your JobCard prop names
-                    pay: job.compensation_amount,
-                    location: job.location_type,
-                    image: job.poster_image_url || Placeholder,
+                const formattedJobs = data.map(job => {
+                    let displayDate = `${job.academic_term}/${job.academic_year}`;
 
-                    // 2. Normalize logic (Convert "OPEN" to true, "EXTERNAL" to "external")
-                    isOpen: job.status === 'OPEN',
-                    type: job.job_type.toLowerCase(), // This makes "EXTERNAL" -> "external"
+                    if (job.schedules && job.schedules.length > 0) {
+                        const sorted = job.schedules
+                            .map(s => new Date(s.date))
+                            .filter(d => !isNaN(d.getTime()))
+                            .sort((a, b) => a - b);
 
-                    // 3. Handle the Date (Backend uses term/year, Dummy used a string)
-                    date: job.date_info || `${job.academic_term}/${job.academic_year}`,
+                        if (sorted.length > 0) {
+                            const start = sorted[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                            const end = sorted[sorted.length - 1].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                            displayDate = sorted.length === 1 ? `${start} ${sorted[0].getFullYear()}` : `${start} - ${end}`;
+                        }
+                    }
 
-                    // 4. Handle the Applicants/Capacity
-                    applicants: job.applicants_count || 0,
-                    postedBy: job.organization_name
-                }));
+                    return {
+                        ...job,
+                        pay: job.compensation_amount,
+                        location: job.location_type,
+                        image: job.poster_image_url || Placeholder,
+                        isOpen: job.status === 'OPEN',
+                        type: job.job_type.toLowerCase(),
+                        date: displayDate,
+                        applicants: job.applicants_count || 0,
+                        postedBy: job.organization_name
+                    };
+                });
 
                 setJobs(formattedJobs);
-                console.log("Current Jobs State:", formattedJobs)
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching jobs: ", error);
@@ -50,9 +58,12 @@ function Jobs() {
     }, []);
 
     const filteredJobs = jobs.filter((job) => {
+        const isPublic = job.status === 'OPEN' || job.status === 'CLOSED';
+
         const matchesType = filter === 'all' || job.type === filter;
         const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase());
-        return matchesType && matchesSearch;
+
+        return isPublic && matchesType && matchesSearch;
     });
 
     const containerVariants = {
@@ -70,7 +81,6 @@ function Jobs() {
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden">
-            {/* 1. Static Background Layers */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -86,7 +96,6 @@ function Jobs() {
 
             <PageTransition>
                 <div className="relative z-20 pt-24 pb-16 px-4 md:px-8 max-w-6xl mx-auto">
-
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
@@ -112,8 +121,8 @@ function Jobs() {
                                     key={type}
                                     onClick={() => setFilter(type)}
                                     className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${filter === type
-                                            ? 'bg-psu-blue text-white shadow-lg scale-105'
-                                            : 'bg-white/80 text-gray-600 hover:bg-white/60'
+                                        ? 'bg-psu-blue text-white shadow-lg scale-105'
+                                        : 'bg-white/80 text-gray-600 hover:bg-white/60'
                                         }`}
                                 >
                                     {type}
@@ -121,10 +130,9 @@ function Jobs() {
                             ))}
                         </motion.div>
 
-                        {/* RESTORED: AnimatePresence with popLayout mode */}
                         <AnimatePresence mode="popLayout">
                             <motion.div
-                                layout // This makes the grid items slide smoothly into new spots
+                                layout
                                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                             >
                                 {filteredJobs.length > 0 ? (

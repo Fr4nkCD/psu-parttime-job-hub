@@ -16,9 +16,14 @@ export function AuthProvider({ children }) {
         const savedStudent = localStorage.getItem('student');
 
         if (token && savedUser) {
-            setUser(JSON.parse(savedUser));
-            setRole(savedRole);
-            setStudent(savedStudent ? JSON.parse(savedStudent) : null);
+            try {
+                setUser(JSON.parse(savedUser));
+                setRole(savedRole);
+                setStudent(savedStudent && savedStudent !== 'undefined' ? JSON.parse(savedStudent) : null);
+            } catch (e) {
+                console.error("Failed to parse auth data", e);
+                logout(); // Clear corrupted data
+            }
         }
         setLoading(false);
     }, []);
@@ -63,6 +68,30 @@ export function AuthProvider({ children }) {
         setStudent(null);
     };
 
+    const refreshAccessToken = async () => {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) return null;
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/auth/refresh/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh: refreshToken })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('access_token', data.access);
+                return data.access;
+            } else if (response.status === 401) {
+                logout(); // Refresh token expired, force re-login
+            }
+        } catch (err) {
+            console.error("Token refresh failed", err);
+        }
+        return null;
+    };
+
     const getToken = () => localStorage.getItem('access_token');
 
     const isAdmin = () => role === 'ADMIN';
@@ -73,6 +102,7 @@ export function AuthProvider({ children }) {
         <AuthContext.Provider value={{
             user, role, student, loading,
             login, logout, getToken,
+            refreshAccessToken, // FIXED: Now exported so components can use it
             isAdmin, isStudent, isLoggedIn,
         }}>
             {!loading && children}

@@ -22,6 +22,16 @@ class JobViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAdminUser()]
+    
+    def get_queryset(self):
+        # 1. Detail View (Retrieve): Allow fetching the record even if inactive.
+        # This fixes the 404 error in AdminJobForm and broken thumbnails in Profile.
+        if self.action == 'retrieve':
+            return Job.objects.all()
+
+        # 2. List View: Filter out soft-deleted jobs for everyone.
+        # This prevents jobs from "reappearing" in the Management list after a refresh.
+        return Job.objects.filter(is_active=True).order_by('-created_at')
 
 
 class StudentViewSet(viewsets.ModelViewSet):
@@ -53,11 +63,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """
-        Logic: 
-        - Anyone logged in can 'create' (Apply) or 'list'/'retrieve' (See their own status).
-        - Only staff/admins can 'update', 'partial_update', or 'destroy'.
+        - Anyone logged in can 'create' (Apply), 'list'/'retrieve' (View status),
+          or 'destroy' (Cancel) their own application.
+        - Only staff can 'update' or 'partial_update' (Approve/Reject).
         """
-        if self.action in ['create', 'list', 'retrieve']:
+        if self.action in ['create', 'list', 'retrieve', 'destroy']:
             permission_classes = [IsAuthenticated]
         else:
             permission_classes = [IsAdminUser]

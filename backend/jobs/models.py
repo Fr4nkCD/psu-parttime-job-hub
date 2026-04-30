@@ -50,6 +50,7 @@ class Job(models.Model):
     academic_year = models.IntegerField()
     poster_image_url = models.URLField(max_length=500, null=True, blank=True)
     line_group_url = models.URLField(max_length=500, null=True, blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -65,9 +66,9 @@ class WorkSchedule(models.Model):
 # 4. Job Application logic
 class Application(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
+    job = models.ForeignKey(Job, on_delete=models.PROTECT)
     application_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING)
+    status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.APPROVED)
 
 # 5. Performance Evaluation
 class Evaluation(models.Model):

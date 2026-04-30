@@ -44,7 +44,9 @@ function Jobs() {
                         applicants: job.applicants_count || 0,
                         postedBy: job.organization_name
                     };
-                });
+                })
+                    // Sorts by latest created_at date descending
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                 setJobs(formattedJobs);
                 setLoading(false);

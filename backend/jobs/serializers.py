@@ -70,6 +70,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     student_id = serializers.SerializerMethodField()
     faculty = serializers.SerializerMethodField()
     job_title = serializers.SerializerMethodField()
+    job_poster_url = serializers.ReadOnlyField(source='job.poster_image_url')
     evaluation = EvaluationSerializer(read_only=True)
 
     def get_student_name(self, obj):

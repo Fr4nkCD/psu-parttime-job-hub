@@ -42,42 +42,53 @@ function Profile() {
 
     useEffect(() => { fetchProfile(); }, []);
 
+    // Add this helper inside the Profile component
+    const handleImageError = (e) => {
+        e.target.src = placeholder;
+    };
+
     const fetchProfile = async () => {
         try {
             const token = getToken();
             const headers = { Authorization: `Bearer ${token}` };
 
+            // 1. Fetch Student Profile
             const res = await fetch(`http://127.0.0.1:8000/api/students/?student_id=${student?.student_id}`, { headers });
             const data = await res.json();
             const profile = Array.isArray(data) ? data[0] : data;
             setProfileData(profile);
             setFormData(profile);
 
+            // 2. Fetch Applications
             const appRes = await fetch('http://127.0.0.1:8000/api/applications/', { headers });
             const apps = await appRes.json();
             const appsList = Array.isArray(apps) ? apps : (apps.results || []);
 
-            // Active Assignments
+            // 3. Process Active Assignments (Sort by latest created job)
             const activeList = appsList.filter((a) => (a.status === 'APPROVED' || a.status === 'PENDING') && !a.evaluation);
             const activeJobsData = await Promise.all(activeList.map(async (app) => {
                 const jobRes = await fetch(`http://127.0.0.1:8000/api/jobs/${app.job}/`, { headers });
                 const jobData = await jobRes.json();
                 return { ...jobData, status: app.status, applicationId: app.id };
             }));
-            setActiveAssignments(activeJobsData);
 
-            // [Point 5] FIXED: Re-fetching History Job details to restore custom thumbnails
+            // --- SORTING: Latest Active Assignments First ---
+            setActiveAssignments(activeJobsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+
+            // 4. Process Work History (Sort by latest application/work date)
             const historyList = appsList.filter(a => !!a.evaluation);
             const historyJobsData = await Promise.all(historyList.map(async (app) => {
                 const jobRes = await fetch(`http://127.0.0.1:8000/api/jobs/${app.job}/`, { headers });
                 const jobData = await jobRes.json();
-                return { ...app, job_poster_url: jobData.poster_image_url };
+                return { ...app, job_poster_url: jobData.poster_image_url, created_at: jobData.created_at };
             }));
-            setWorkHistory(historyJobsData);
+
+            // --- SORTING: Most Recent Work History First ---
+            setWorkHistory(historyJobsData.sort((a, b) => new Date(b.application_date) - new Date(a.application_date)));
 
             setLoading(false);
         } catch (err) {
-            console.error('Error fetching profile:', err);
+            console.error('Error fetching professional profile:', err);
             setLoading(false);
         }
     };
@@ -250,7 +261,7 @@ function Profile() {
                     {/* [Point 1, 3] Info Panel with Navbar-style PFP and Full Details */}
                     <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-10 border border-white/40">
                         <div className="flex flex-col md:flex-row gap-10 items-center">
-                            <div className="w-32 h-32 rounded-full bg-psu-blue text-white flex items-center justify-center font-bold text-5xl shadow-xl border-4 border-white">
+                            <div className="w-32 h-32 rounded-full bg-psu-blue text-white flex items-center justify-center font-bold text-5xl shadow-xl border-4 border-white select-none">
                                 {student?.first_name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 w-full">
@@ -296,7 +307,12 @@ function Profile() {
                             {activeAssignments.map((job) => (
                                 <div key={job.id} className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-6 border-l-[12px] border-[#06C755] flex flex-col md:flex-row gap-8 items-center animate-in fade-in slide-in-from-left-4 duration-500">
                                     <div className="w-48 h-32 rounded-xl overflow-hidden shadow-lg border border-white/50 flex-shrink-0">
-                                        <img src={job.poster_image_url || placeholder} alt="Job" className="w-full h-full object-cover" />
+                                        <img
+                                            src={job.poster_image_url || placeholder}
+                                            alt="Job"
+                                            className="w-full h-full object-cover"
+                                            onError={handleImageError}
+                                        />
                                     </div>
                                     <div className="flex-1">
                                         <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${job.status === 'APPROVED' ? 'text-green-600' : 'text-amber-500'}`}>{job.status}</p>
@@ -316,7 +332,12 @@ function Profile() {
                             {workHistory.map((app) => (
                                 <div key={app.id} className="bg-white/70 border border-white/60 rounded-xl p-5 flex items-center gap-6 shadow-sm hover:bg-white transition-all group">
                                     <div className="w-24 h-24 rounded-xl overflow-hidden shadow-md border border-white flex-shrink-0">
-                                        <img src={app.job_poster_url || placeholder} alt="Thumbnail" className="w-full h-full object-cover" />
+                                        <img
+                                            src={app.job_poster_url || placeholder}
+                                            alt="Thumbnail"
+                                            className="w-full h-full object-cover"
+                                            onError={handleImageError}
+                                        />
                                     </div>
                                     <div className="flex-1">
                                         <h4 className="font-bold text-slate-800 text-xl mb-1">{app.job_title}</h4>

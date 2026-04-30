@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import apiRequest from '../../utils/api'; // Using your centralized helper
 
 function AdminApplicants() {
     const { id } = useParams();
@@ -20,21 +21,15 @@ function AdminApplicants() {
 
     const fetchData = async () => {
         try {
-            const headers = {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
-            };
-
             const [jobRes, appRes] = await Promise.all([
-                fetch(`http://127.0.0.1:8000/api/jobs/${id}/`, { headers }),
-                fetch(`http://127.0.0.1:8000/api/applications/?job=${id}`, { headers }),
+                apiRequest(`/jobs/${id}/`),
+                apiRequest(`/applications/?job=${id}`),
             ]);
 
             const jobData = await jobRes.json();
             const appData = await appRes.json();
 
             setJob(jobData);
-
             const cleanApps = Array.isArray(appData) ? appData : (appData.results || []);
             setApplications(cleanApps);
 
@@ -45,37 +40,29 @@ function AdminApplicants() {
         }
     };
 
-    const handleStatusChange = async (applicationId, newStatus) => {
+    // Requirement 2: Remove applicant from database (Kick)
+    const handleKick = async (applicationId) => {
+        if (!window.confirm("Remove this applicant? They will be able to apply again if the job is still open.")) return;
+        
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/applications/${applicationId}/`, {
-                method: 'PATCH', // Partial update
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getToken()}`
-                },
-                body: JSON.stringify({ status: newStatus }),
+            const response = await apiRequest(`/applications/${applicationId}/`, {
+                method: 'DELETE'
             });
 
             if (response.ok) {
-                // ONLY update UI if the database actually saved it
-                setApplications(applications.map((app) =>
-                    app.id === applicationId ? { ...app, status: newStatus } : app
-                ));
+                setApplications(prev => prev.filter(app => app.id !== applicationId));
             } else {
-                const errorData = await response.json();
-                console.error('Server rejected the update:', errorData);
-                alert("Failed to save status. Check console for details.");
+                console.error('Failed to remove applicant');
             }
         } catch (error) {
-            console.error('Network error updating status:', error);
+            console.error('Network error during kick:', error);
         }
     };
 
     const getStatusBadge = (status) => {
         const styles = {
-            PENDING: 'bg-amber-50 text-amber-600 border-amber-100',
             APPROVED: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-            REJECTED: 'bg-rose-50 text-rose-600 border-rose-100',
+            PENDING: 'bg-slate-100 text-slate-500 border-slate-200', 
         };
         return styles[status] || 'bg-slate-50 text-slate-500 border-slate-100';
     };
@@ -102,7 +89,7 @@ function AdminApplicants() {
                             ← Back to Job Management
                         </button>
                         <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-md">Applicant List</h1>
-                        {job && <p className="text-white/70 font-medium">{job.title}</p>}
+                        {job && <p className="text-white/70 font-medium">{job.title} • {job.academic_term}/{job.academic_year}</p>}
                     </div>
 
                     {/* Main Container */}
@@ -126,31 +113,20 @@ function AdminApplicants() {
                                     <option value="all">All Statuses</option>
                                     <option value="PENDING">⏳ Pending</option>
                                     <option value="APPROVED">✅ Approved</option>
-                                    <option value="REJECTED">❌ Rejected</option>
                                 </select>
                             </div>
-
-                            <div className="flex flex-wrap gap-3">
-                                {['PENDING', 'APPROVED', 'REJECTED'].map((s) => (
-                                    <div key={s} className="bg-white/40 border border-white/60 rounded-lg px-4 py-1.5 text-[10px] font-bold tracking-wider">
-                                        <span className="text-gray-400 uppercase">{s}:</span>
-                                        <span className="text-gray-800 ml-2">
-                                            {applications.filter((a) => a.status === s).length}
-                                        </span>
-                                    </div>
-                                ))}
-                                <div className="bg-psu-blue/10 border border-psu-blue/20 rounded-lg px-4 py-1.5 text-[10px] font-bold tracking-wider text-psu-blue">
-                                    TOTAL: {applications.length}
-                                </div>
+                            
+                            <div className="bg-psu-blue/10 border border-psu-blue/20 rounded-lg px-4 py-1.5 text-[10px] font-bold tracking-wider text-psu-blue w-fit">
+                                TOTAL APPLICANTS: {applications.length}
                             </div>
                         </div>
 
                         {/* Table */}
                         <div className="overflow-x-auto">
                             {loading ? (
-                                <p className="text-center text-gray-500 py-20 animate-pulse font-medium">Loading records...</p>
+                                <p className="text-center text-gray-500 py-20 animate-pulse font-medium uppercase tracking-widest">Fetching records...</p>
                             ) : filteredApplications.length === 0 ? (
-                                <p className="text-center text-gray-400 py-20 font-medium">No applications found.</p>
+                                <p className="text-center text-gray-400 py-20 font-medium">No applications found matching your criteria.</p>
                             ) : (
                                 <table className="w-full text-sm">
                                     <thead>
@@ -173,39 +149,31 @@ function AdminApplicants() {
                                                 </td>
                                                 <td className="px-6 py-5 text-gray-600">{app.faculty}</td>
                                                 <td className="px-6 py-5 text-gray-500 text-xs">
-                                                    {new Date(app.application_date).toLocaleDateString()}
+                                                    {new Date(app.application_date).toLocaleDateString('en-GB')}
                                                 </td>
-                                                <td className="px-6 py-5">
+                                                <td className="px-6 py-5 select-none">
                                                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border ${getStatusBadge(app.status)}`}>
                                                         {app.status}
                                                     </span>
                                                 </td>
                                                 <td className="px-8 py-5">
                                                     <div className="flex justify-center gap-2">
-                                                        {app.status === 'PENDING' ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => handleStatusChange(app.id, 'APPROVED')}
-                                                                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm transition-all"
-                                                                >
-                                                                    Approve
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleStatusChange(app.id, 'REJECTED')}
-                                                                    className="bg-white border border-gray-200 hover:bg-rose-50 text-rose-600 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
-                                                                >
-                                                                    Reject
-                                                                </button>
-                                                            </>
-                                                        ) : app.status === 'APPROVED' ? (
+                                                        {/* Requirement 2: Reject button (now Kick) for all non-completed job statuses */}
+                                                        {job?.status !== 'COMPLETED' ? (
                                                             <button
-                                                                onClick={() => navigate(`/admin/applications/${app.id}/evaluate`)}
-                                                                className="bg-psu-accent hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-lg transition-all shadow-sm"
+                                                                onClick={() => handleKick(app.id)}
+                                                                className="bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 text-[10px] font-bold px-4 py-1.5 rounded-lg transition-all shadow-sm"
                                                             >
-                                                                ⭐ Evaluate
+                                                                Kick Applicant
                                                             </button>
                                                         ) : (
-                                                            <span className="text-gray-300 italic text-xs">No actions</span>
+                                                            /* Requirement 3: Evaluate button only when job is COMPLETED */
+                                                            <button
+                                                                onClick={() => navigate(`/admin/applications/${app.id}/evaluate`)}
+                                                                className="bg-psu-accent hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-2"
+                                                            >
+                                                                ⭐ {app.evaluation ? 'Re-evaluate' : 'Evaluate'}
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </td>

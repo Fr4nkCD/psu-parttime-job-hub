@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import PageTransition from '../components/PageTransition';
 import bgImage from '../assets/home-bg-2.jpg';
 import Placeholder from '../assets/placeholder-image.jpg';
-import lineIcon from '../assets/LINE_logo.svg'; 
+import lineIcon from '../assets/LINE_logo.svg';
 
 function JobDetail() {
     const { id } = useParams();
@@ -18,6 +18,7 @@ function JobDetail() {
     const [applicationStatus, setApplicationStatus] = useState(null);
     const [applying, setApplying] = useState(false);
     const [applyError, setApplyError] = useState(null);
+    const [myAppId, setMyAppId] = useState(null);
 
     useEffect(() => {
         const fetchJobDetail = async () => {
@@ -42,10 +43,12 @@ function JobDetail() {
                     });
                     const apps = await appRes.json();
                     const appsList = Array.isArray(apps) ? apps : (apps.results || []);
+                    
                     const myApp = appsList.find((a) => String(a.job) === String(id));
                     if (myApp) {
                         setApplied(true);
                         setApplicationStatus(myApp.status);
+                        setMyAppId(myApp.id);
                     }
                 }
                 setLoading(false);
@@ -73,45 +76,70 @@ function JobDetail() {
                 const data = await response.json();
                 throw new Error(JSON.stringify(data) || 'Failed to apply.');
             }
+            const newApp = await response.json();
             setApplied(true);
-            setApplicationStatus('PENDING');
+            setApplicationStatus('APPROVED');
+            setMyAppId(newApp.id);
             setJob(prev => ({ ...prev, applicants: prev.applicants + 1 }));
         } catch (err) { setApplyError(err.message); } finally { setApplying(false); }
     };
 
-    const getScheduleSummary = () => {
-        if (!job || !job.schedules || job.schedules.length === 0) {
-            return { dates: 'No dates set', totalHours: '0.0' };
+    const handleCancel = async () => {
+        if (!window.confirm("Are you sure you want to cancel your application?")) return;
+
+        setApplying(true);
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/applications/${myAppId}/`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${getToken()}` },
+            });
+
+            if (response.ok) {
+                setApplied(false);
+                setApplicationStatus(null);
+                setMyAppId(null);
+                setJob(prev => ({ ...prev, applicants: Math.max(0, prev.applicants - 1) }));
+            } else {
+                throw new Error('Could not cancel application.');
+            }
+        } catch (err) {
+            setApplyError(err.message);
+        } finally {
+            setApplying(false);
         }
+    };
+
+    // New Helper: Dynamic Status Badge styling[cite: 1]
+    const getStatusBadgeStyle = (status) => {
+        switch(status) {
+            case 'OPEN': return { label: 'Open', color: 'bg-[#06C755]' };
+            case 'IN_PROGRESS': return { label: 'In Progress', color: 'bg-amber-500' };
+            case 'COMPLETED': return { label: 'Completed', color: 'bg-psu-blue' };
+            default: return { label: 'Closed', color: 'bg-gray-400' };
+        }
+    };
+
+    const getScheduleSummary = () => {
+        if (!job || !job.schedules || job.schedules.length === 0) return { dates: 'No dates set', totalHours: '0.0' };
         try {
             const totalHours = job.schedules.reduce((acc, shift) => {
                 const start = new Date(`1970-01-01T${shift.start_time}`);
                 const end = new Date(`1970-01-01T${shift.end_time}`);
-                const diff = (end - start) / (1000 * 60 * 60);
-                return acc + (isNaN(diff) ? 0 : diff);
+                return acc + ((end - start) / (1000 * 60 * 60));
             }, 0);
-
-            const validDates = job.schedules
-                .map(s => new Date(s.date))
-                .filter(d => !isNaN(d.getTime()))
-                .sort((a, b) => a - b);
-
-            if (validDates.length === 0) return { dates: 'Invalid dates', totalHours: '0.0' };
-
-            const startDate = validDates[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-            const endDate = validDates[validDates.length - 1].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
-            const dateDisplay = validDates.length === 1 ? startDate : `${startDate} - ${endDate}`;
-            return { dates: dateDisplay, totalHours: totalHours.toFixed(1) };
-        } catch (e) {
-            return { dates: 'Error in dates', totalHours: '0.0' };
-        }
+            const sorted = job.schedules.map(s => new Date(s.date)).sort((a, b) => a - b);
+            const startDate = sorted[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            const endDate = sorted[sorted.length - 1].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            return { dates: sorted.length === 1 ? startDate : `${startDate} - ${endDate}`, totalHours: totalHours.toFixed(1) };
+        } catch (e) { return { dates: 'Error in dates', totalHours: '0.0' }; }
     };
 
     const summary = job ? getScheduleSummary() : { dates: 'Loading...', totalHours: '0.0' };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center text-white font-medium"><p>Loading job details...</p></div>;
     if (!job) return <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">Job not found.</div>;
+
+    const badge = getStatusBadgeStyle(job.status);
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden">
@@ -128,20 +156,15 @@ function JobDetail() {
                     <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-8 flex flex-col lg:flex-row gap-8">
                         {/* Left — Job Info */}
                         <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-4">
-                                <span className={`text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wider ${job.isOpen ? 'bg-[#06C755] text-white shadow-sm' : 'bg-gray-400 text-white'}`}>
-                                    {job.isOpen ? '● Open' : '● Closed'}
+                            <div className="flex items-center gap-3 mb-4 select-none">
+                                {/* DYNAMIC STATUS BADGE UPDATED[cite: 1] */}
+                                <span className={`text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wider text-white shadow-sm ${badge.color}`}>
+                                    ● {badge.label}
                                 </span>
-                                {applied && (
-                                    <span className="text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wider bg-psu-blue text-white shadow-sm">
-                                        Status: {applicationStatus}
-                                    </span>
-                                )}
                             </div>
 
                             <h1 className="text-3xl font-bold text-gray-900 mb-6">{job.title}</h1>
 
-                            {/* Info Grid: Restored refreshing light style */}
                             <div className="bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-6 grid grid-cols-2 gap-y-6 gap-x-8 mb-8 shadow-sm">
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl">💵</span>
@@ -176,7 +199,6 @@ function JobDetail() {
                             <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">📝 Job Description</h2>
                             <p className="text-gray-600 leading-relaxed mb-8">{job.description}</p>
 
-                            {/* Detailed Work Schedule Section */}
                             <div className="space-y-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">📅 Work Schedule</h3>
                                 <div className="bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-2 max-w-sm">
@@ -197,7 +219,6 @@ function JobDetail() {
                                 </div>
                             </div>
 
-                            {/* LINE Group for Approved Students */}
                             {canSeePrivateDetails && job.line_group_url && (
                                 <div className="mt-8 p-4 bg-[#06C755]/10 border border-[#06C755]/30 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     <div className="flex items-center gap-4">
@@ -214,9 +235,9 @@ function JobDetail() {
                             )}
                         </div>
 
-                        {/* Right Sidebar — Clean and compact */}
+                        {/* Right Sidebar */}
                         <div className="lg:w-80 flex-shrink-0 flex flex-col gap-6">
-                            <div className="bg-white/80 rounded-2xl p-4 shadow-lg border border-white/60">
+                            <div className="bg-white/80 rounded-2xl p-4 shadow-lg border border-white/60 text-center">
                                 <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden mb-4 border border-gray-100">
                                     <img src={job.image} alt={job.title} className="w-full h-full object-cover" />
                                 </div>
@@ -224,20 +245,43 @@ function JobDetail() {
                                     <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Posted By</p>
                                     <p className="text-sm font-semibold text-gray-700 mb-6">{job.organization_name}</p>
 
-                                    <div className="mb-3 flex justify-between items-center px-1">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest uppercase">Capacity</span>
-                                        <span className="text-[10px] font-bold text-gray-600">/ {job.required_amount} Applicants</span>
+                                    <div className="mb-4">
+                                        <p className="text-xl font-bold text-gray-800">
+                                            Applied {job.applicants}/{job.required_amount}
+                                        </p>
                                     </div>
 
                                     {isStudent() ? (
-                                        job.isOpen ? (
-                                            <button onClick={handleApply} disabled={applied || applying}
-                                                className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 text-xs uppercase tracking-widest ${applied ? 'bg-[#06C755] cursor-default' : applying ? 'bg-gray-400' : 'bg-psu-blue hover:bg-blue-900'}`}>
-                                                {applied ? '✓ Submitted' : applying ? 'Syncing...' : 'Apply Now'}
-                                            </button>
-                                        ) : (
-                                            <button disabled className="w-full py-4 rounded-xl font-bold text-white bg-gray-400 cursor-not-allowed text-xs uppercase tracking-widest">Closed</button>
-                                        )
+                                        <>
+                                            {applied ? (
+                                                <>
+                                                    <button 
+                                                        onClick={job.isOpen ? handleCancel : null}
+                                                        disabled={applying || !job.isOpen}
+                                                        className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 text-xs uppercase tracking-widest 
+                                                            ${job.isOpen 
+                                                                ? 'bg-rose-500 hover:bg-rose-600' 
+                                                                : 'bg-gray-500 cursor-not-allowed'}`}
+                                                    >
+                                                        {applying ? 'Syncing...' : job.isOpen ? 'Cancel Application' : 'Applied'}
+                                                    </button>
+                                                    
+                                                    {/* design subtext for non-OPEN status[cite: 1, 2] */}
+                                                    {!job.isOpen && (
+                                                        <p className="text-[11px] text-gray-500 mt-3 font-medium">
+                                                            To cancel your application, please contact staff directly.
+                                                        </p>
+                                                    )}
+                                                </>
+                                            ) : job.isOpen ? (
+                                                <button onClick={handleApply} disabled={applying}
+                                                    className="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 text-xs uppercase tracking-widest bg-psu-blue hover:bg-blue-900">
+                                                    {applying ? 'Syncing...' : 'Apply Now'}
+                                                </button>
+                                            ) : (
+                                                <button disabled className="w-full py-4 rounded-xl font-bold text-white bg-gray-400 cursor-not-allowed text-xs uppercase tracking-widest">Closed</button>
+                                            )}
+                                        </>
                                     ) : isAdmin() && (
                                         <button onClick={() => navigate(`/admin/jobs/${job.id}/edit`)}
                                             className="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 bg-psu-blue hover:bg-blue-900 text-xs uppercase tracking-widest">

@@ -170,8 +170,8 @@ function AdminEvaluate() {
                                 <div className="w-20 h-20 rounded-3xl bg-psu-blue/10 flex items-center justify-center text-3xl border border-psu-blue/20">👤</div>
                                 <div>
                                     <h2 className="text-2xl font-black text-slate-800 mb-2 leading-none">{application?.student_name}</h2>
-                                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">{application?.student_id}</p>
-                                    <div className="mt-3 inline-block bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-blue-100">
+                                    <p className="text-slate-500 text-md font-bold uppercase tracking-wider">{application?.student_id}</p>
+                                    <div className="mt-3 inline-block bg-blue-50 text-blue-600 text-sm font-semibold uppercase tracking-widest px-3 py-1 rounded-full border border-blue-100">
                                         JOB: {application?.job_title}
                                     </div>
                                 </div>
@@ -184,8 +184,8 @@ function AdminEvaluate() {
                                     {ratingsConfig.map((item) => (
                                         <motion.div variants={itemVariants} initial="hidden" animate="visible" key={item.key} className="flex items-center justify-between gap-4">
                                             <div>
-                                                <p className="font-black text-slate-700 text-sm uppercase tracking-tight">{item.label}</p>
-                                                <p className="text-[11px] text-slate-400 font-medium">{item.desc}</p>
+                                                <p className="font-black text-slate-700 text-lg uppercase tracking-tight">{item.label}</p>
+                                                <p className="text-md text-slate-500 font-medium">{item.desc}</p>
                                             </div>
                                             <StarRating value={form[item.key]} onChange={(val) => setForm({ ...form, [item.key]: val })} />
                                         </motion.div>
@@ -193,7 +193,7 @@ function AdminEvaluate() {
                                 </div>
 
                                 <div className="bg-slate-900/5 border border-white/50 rounded-3xl p-6 flex items-center justify-between shadow-inner">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Live Average</span>
+                                    <span className="text-md font-semibold text-slate-600 uppercase tracking-[0.2em]">Live Average</span>
                                     <div className="text-right">
                                         <span className="text-5xl font-black text-slate-800 tracking-tighter">{averageRating()}</span>
                                         <span className="text-slate-400 font-bold ml-1 text-sm">/ 5.0</span>
@@ -201,7 +201,7 @@ function AdminEvaluate() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Verdict</label>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Verdict</label>
                                     <div className="flex gap-4">
                                         <button onClick={() => setForm({ ...form, result_status: 'PASS' })}
                                             className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${form.result_status === 'PASS' ? 'bg-emerald-500 border-emerald-500 text-white shadow-xl' : 'bg-white border-slate-100 text-slate-300 hover:border-emerald-200'}`}>
@@ -215,7 +215,7 @@ function AdminEvaluate() {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Notes</label>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Notes</label>
                                     <textarea value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} rows={3}
                                         placeholder="Performance summary..."
                                         className="w-full border-none rounded-2xl px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-blue-200 bg-white/50 resize-none transition-all" />

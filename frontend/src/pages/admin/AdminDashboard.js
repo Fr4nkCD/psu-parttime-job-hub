@@ -113,7 +113,7 @@ function AdminDashboard() {
         const tableOptions = {
             theme: 'grid',
             styles: { fontSize: 8 },
-            headStyles: { fillColor: '#06C755', textColor: '#FFFFFF', fontStyle: 'bold' },
+            headStyles: { fillColor: '#1A3A6B', textColor: '#FFFFFF', fontStyle: 'bold' },
             alternateRowStyles: { fillColor: '#f8fafc' }
         };
 

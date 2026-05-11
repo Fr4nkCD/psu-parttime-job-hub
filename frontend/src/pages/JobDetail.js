@@ -165,7 +165,7 @@ function JobDetail() {
 
                             <h1 className="text-3xl font-bold text-gray-900 mb-6">{job.title}</h1>
 
-                            <div className="bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-6 grid grid-cols-2 gap-y-6 gap-x-8 mb-8 shadow-sm">
+                            <div className="bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-6 col sm:grid grid-cols-2 gap-y-6 gap-x-8 mb-8 shadow-sm">
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl">💵</span>
                                     <div className="flex flex-col">
@@ -201,7 +201,7 @@ function JobDetail() {
 
                             <div className="space-y-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">📅 Work Schedule</h3>
-                                <div className="bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-2 max-w-sm">
+                                <div className="bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-2 w-full">
                                     {job.schedules?.map((shift, index) => (
                                         <div key={index} className="flex justify-between items-center p-3 rounded-xl">
                                             <div className="flex flex-col">

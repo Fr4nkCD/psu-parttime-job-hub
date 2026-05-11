@@ -62,10 +62,10 @@ function Personnel() {
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/40"
                     >
-                        <h1 className="text-3xl font-bold text-psu-blue mb-1 tracking-tight uppercase">
+                        <h1 className="text-3xl font-bold text-psu-blue mb-1 tracking-tight">
                             Project Personnel
                         </h1>
-                        <p className="text-slate-500 text-xs font-semibold tracking-widest uppercase opacity-80">
+                        <p className="text-slate-500 text-xs font-semibold tracking-widest opacity-80">
                             The academic advisors and development team
                         </p>
                     </motion.div>
@@ -86,7 +86,7 @@ function Personnel() {
                                 </div>
                                 
                                 <div className="flex-1">
-                                    <p className="text-[10px] font-bold text-psu-blue tracking-[0.2em] uppercase mb-1.5 opacity-90">
+                                    <p className="text-[10px] font-bold text-psu-blue tracking-[0.2em] mb-1.5 opacity-90">
                                         {person.role}
                                     </p>
                                     <h3 className="font-bold text-slate-900 text-xl tracking-tight mb-1">
@@ -96,7 +96,7 @@ function Personnel() {
                                         <p className="text-sm text-slate-600 font-semibold italic opacity-90">
                                             {person.department}
                                         </p>
-                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wide opacity-70">
+                                        <p className="text-xs text-slate-500 font-bold tracking-wide opacity-70">
                                             {person.university}
                                         </p>
                                         {person.studentId && (

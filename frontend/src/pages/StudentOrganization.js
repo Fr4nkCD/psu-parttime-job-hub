@@ -30,10 +30,10 @@ function StudentOrganization() {
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/40"
                     >
-                        <h1 className="text-3xl font-bold text-psu-blue mb-1 tracking-tight uppercase">
+                        <h1 className="text-3xl font-bold text-psu-blue mb-1 tracking-tight">
                             Student Organization
                         </h1>
-                        <p className="text-slate-500 text-xs font-semibold tracking-widest uppercase opacity-80">
+                        <p className="text-slate-500 text-xs font-semibold tracking-widest opacity-80">
                             Student Development and Alumni Relations Office
                         </p>
                     </motion.div>

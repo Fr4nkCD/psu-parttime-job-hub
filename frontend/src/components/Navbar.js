@@ -46,12 +46,12 @@ function Navbar() {
                 {/* Logo & Brand: Requirement - font-semibold thickness */}
                 <Link to="/" className="flex items-center gap-2 shrink-0">
                     <img src={logo} alt="PSU Logo" className="h-8 md:h-10 w-auto" />
-                    <span className="text-lg md:text-2xl font-semibold text-gray-800 tracking-tight">Part-time Hub</span>
+                    <span className="text-lg md:text-2xl font-semibold text-gray-800 tracking-tight">Part-time Job Hub</span>
                 </Link>
 
                 {/* Right Side Logic */}
                 <div className="flex items-center md:gap-4 ml-auto">
-                    
+
                     {/* Desktop Nav Links */}
                     <div className="hidden md:flex items-center gap-2 mr-4">
                         <Link to="/" className={navLinkStyle}>Home</Link>
@@ -59,13 +59,13 @@ function Navbar() {
                         {isLoggedIn() && isAdmin() && (
                             <Link to="/admin/dashboard" className={navLinkStyle}>Dashboard</Link>
                         )}
-                        
+
                         {/* Requirement 2: About Us Dropdown with Collision Fix */}
                         <div className="relative">
                             <button
-                                onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    setAboutOpen(!aboutOpen); 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAboutOpen(!aboutOpen);
                                     setDropdownOpen(false); // Close profile if about is clicked
                                 }}
                                 className={navLinkStyle}
@@ -74,10 +74,10 @@ function Navbar() {
                             </button>
                             <AnimatePresence>
                                 {aboutOpen && (
-                                    <motion.div 
-                                        initial={{ opacity: 0, y: 10 }}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 10 }}
+                                        exit={{ opacity: 0, y: -10 }}
                                         className="absolute top-12 left-0 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
                                     >
                                         <Link to="/about" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 font-medium">📋 About This Project</Link>
@@ -106,10 +106,10 @@ function Navbar() {
                             >
                                 {student?.first_name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase()}
                             </motion.button>
-                            
+
                             <AnimatePresence>
                                 {dropdownOpen && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
@@ -140,7 +140,11 @@ function Navbar() {
                     {/* Hamburger Button (Mobile Only) */}
                     <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            {isOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16m-7 6h7" />}
+                            {isOpen ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
+                            )}
                         </svg>
                     </button>
                 </div>
@@ -149,7 +153,7 @@ function Navbar() {
             {/* Requirement 3 & 4: Mobile Drawer with Integrated Profile */}
             <AnimatePresence>
                 {isOpen && (
-                    <motion.div 
+                    <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -166,7 +170,7 @@ function Navbar() {
 
                             <Link to="/" className="px-4 py-3 text-gray-700 font-semibold hover:bg-gray-100 rounded-xl transition-colors">🏠 Home</Link>
                             <Link to="/jobs" className="px-4 py-3 text-gray-700 font-semibold hover:bg-gray-100 rounded-xl transition-colors">🔍 Browse Jobs</Link>
-                            
+
                             {isLoggedIn() ? (
                                 <>
                                     <Link to={isAdmin() ? "/admin/dashboard" : "/profile"} className="px-4 py-3 text-gray-700 font-bold hover:bg-gray-100 rounded-xl">

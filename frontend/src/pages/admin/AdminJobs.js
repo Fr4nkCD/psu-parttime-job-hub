@@ -230,7 +230,7 @@ function AdminJobs() {
                                                 <td className="px-8 py-5">
                                                     <div className="flex justify-center gap-2">
                                                         <button
-                                                            onClick={() => navigate(`/jobs/${job.id}`)}
+                                                            onClick={() => window.open(`/jobs/${job.id}`, '_blank')}
                                                             className="p-2 bg-slate-100 hover:bg-white rounded-lg text-slate-600 transition-all shadow-sm border border-slate-200"
                                                             title="View Public Post"
                                                         >

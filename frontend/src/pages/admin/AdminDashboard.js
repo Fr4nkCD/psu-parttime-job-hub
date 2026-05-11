@@ -206,7 +206,7 @@ function AdminDashboard() {
 
                         <div className="pt-4">
                             <h2 className="text-[10px] font-bold text-slate uppercase tracking-[0.2em] mb-6">Recent Work Listings</h2>
-                            <div className="overflow-x-auto min-h-[200px]">
+                            <div className="bg-white/40 rounded-2xl p-6 border border-white/60 shadow-sm overflow-x-auto min-h-[200px]">
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-200 text-slate text-left text-[10px] uppercase font-bold tracking-widest">
